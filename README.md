@@ -13,7 +13,7 @@
 
 ## 📖 Sobre o Projeto
 
-O **Growtwitter** é uma aplicação de rede social inspirada no X (antigo Twitter), desenvolvida como um desafio técnico proposto pela **Growdev** dentro do currículo de formação Full Stack. O projeto visa consolidar conhecimentos avançados no ecossistema React, focando em performance, escalabilidade e arquitetura de software moderna.
+O **Growtwitter** é uma aplicação de rede social inspirada no X (antigo Twitter), desenvolvida como um desafio técnico proposto pela **Growdev** dentro do currículo de formação Desenvolvimento com VTEX IO. O projeto visa consolidar conhecimentos avançados no ecossistema React, focando em performance, escalabilidade e arquitetura de software moderna.
 
 A aplicação permite que usuários compartilhem mensagens em tempo real, interajam com conteúdos de outros usuários através de curtidas e construam uma rede de conexões (seguidores/seguindo).
 
@@ -27,7 +27,7 @@ Para atender às demandas do desafio proposto pela Growdev, foram implementados 
 - [x] **Gerenciamento de Estado Global**: Uso de Redux Toolkit para persistência e consistência de dados entre componentes complexos.
 - [x] **Integração com API Externa**: Persistência de dados real-time através de comunicação com backend dedicado.
 - [x] **Sistema de Autenticação**: Fluxo completo de Login e Cadastro com proteção de sessões via Token JWT.
-- [x] **CRUD Completo e Interações**: Criação, listagem e exclusão de tweets, além de sistemas de Like e Follow.
+- [x] **Interações**: Criação e listagem de tweets, além de sistemas de Like e Follow.
 
 ---
 
@@ -46,8 +46,8 @@ O frontend consome uma **API RESTful** dedicada fornecida pela Growdev.
 | Funcionalidade | Descrição |
 | :--- | :--- |
 | **Feed Dinâmico** | Listagem de tweets em tempo real com ordenação cronológica decrescente. |
-| **Gestão de Tweets** | Interface para criação de novos conteúdos e exclusão de posts autorais. |
-| **Exploração e Trends** | Página dedicada para busca de conteúdos e painel de Trending Topics. |
+| **Gestão de Tweets** | Interface para criação de novos conteúdos e posts autorais. |
+| **Exploração e Trends** | Página dedicada para busca de conteúdos e painel de Trending Topics (estática). |
 | **Perfil de Usuário** | Exibição de estatísticas detalhadas (Seguidores/Seguindo) e histórico de postagens. |
 | **Interatividade** | Sistema de curtidas otimistas e funcionalidade de seguir/deixar de seguir outros usuários. |
 | **UX Responsiva** | Layout adaptável para Desktop, Tablet e Mobile com navegação inferior customizada para smartphones. |
@@ -61,9 +61,6 @@ Organização do estado global em Slices modulares (`auth`, `feed`, `profile`), 
 
 ### Proteção de Rotas
 Implementação de um componente wrapper de `PrivateRoute` que utiliza o estado global para validar o acesso a páginas internas, garantindo a integridade dos dados do usuário.
-
-### Workflow Profissional
-O desenvolvimento seguiu rigorosamente o padrão **GitHub Flow**, com o uso de branches para cada funcionalidade e um histórico de commits documentado detalhadamente no arquivo [HISTORICO_GIT.md](HISTORICO_GIT.md).
 
 ---
 
@@ -81,7 +78,7 @@ O desenvolvimento seguiu rigorosamente o padrão **GitHub Flow**, com o uso de b
    ```
 
 3. **Configurar Variáveis de Ambiente:**
-   Crie um arquivo `.env` na raiz do projeto baseado no `.env.example`:
+   Crie um arquivo `.env` na raiz do projeto:
    ```bash
    VITE_API_URL=URL_DA_API_GROWDEV
    ```
@@ -93,12 +90,6 @@ O desenvolvimento seguiu rigorosamente o padrão **GitHub Flow**, com o uso de b
 
 ---
 
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
----
-
 <div align="center">
-  <sub>Desenvolvido com ❤️ como parte do desafio técnico da <b>Growdev</b>.</sub>
+  <sub>Desenvolvido como parte do desafio técnico da <b>Growdev</b>.</sub>
 </div>
