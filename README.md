@@ -64,6 +64,30 @@ Implementação de um componente wrapper de `PrivateRoute` que utiliza o estado 
 
 ---
 
+## 📂 Estrutura de Pastas
+
+```plaintext
+src/
+├── assets/             # Imagens, logos e recursos estáticos
+├── components/         # Componentes reutilizáveis (TweetCard, Sidebar, etc.)
+├── pages/              # Páginas principais (Home, Login, Profile, Explore)
+├── services/           # Integração com a API (Axios e chamadas REST)
+├── store/              # Configuração do Redux Toolkit
+│   ├── slices/         # Lógica de estado global por domínio
+│   └── index.ts        # Store configurada
+├── styles/             # Configurações de tema (MUI) e estilos globais
+├── types/              # Tipagens globais e interfaces TypeScript
+├── App.tsx             # Componente raiz e roteamento
+└── main.tsx            # Ponto de entrada (Redux Provider e renderização)
+```
+
+### Detalhes de Arquitetura
+
+- **main.tsx**: É o ponto de entrada da aplicação. Aqui, o `Redux Store` é injetado em toda a árvore de componentes através do `Provider` do React-Redux, garantindo que o estado global esteja acessível em qualquer nível.
+- **Separação de Preocupações (SoC)**: A organização das pastas segue o padrão SoC, isolando a lógica de negócio (services/store) da interface de usuário (components/pages). Isso facilita a manutenção, testes e escalabilidade do projeto.
+
+---
+
 ## 💻 Como Executar o Projeto
 
 1. **Clonar o Repositório:**
