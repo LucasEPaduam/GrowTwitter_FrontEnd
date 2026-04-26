@@ -14,9 +14,28 @@ const initialState: FeedState = {
   error: null,
 };
 
-export const fetchFeed = createAsyncThunk('feed/fetchFeed', async (_, thunkAPI) => {
+export const fetchFeed = createAsyncThunk('feed/fetchFeed', async (userId: string | undefined, thunkAPI) => {
   try {
-    return await tweetService.getFeed();
+    const state = thunkAPI.getState() as any;
+    const currentUserId = userId || state.auth.user?.id;
+
+    if (!currentUserId) {
+      return await tweetService.getFeed();
+    }
+
+    const [feedTweets, userTweets] = await Promise.all([
+      tweetService.getFeed(),
+      tweetService.getUserTweets(currentUserId)
+    ]);
+
+    const combined = [...feedTweets, ...userTweets];
+
+    const uniqueMap = new Map();
+    combined.forEach(tweet => {
+      uniqueMap.set(tweet.id, tweet);
+    });
+
+    return Array.from(uniqueMap.values());
   } catch (error: any) {
     return thunkAPI.rejectWithValue(error.response?.data?.message || 'Falha ao buscar feed');
   }
@@ -35,6 +54,14 @@ export const createReply = createAsyncThunk('feed/createReply', async ({ content
     return await tweetService.createReply(content, replyTo);
   } catch (error: any) {
     return thunkAPI.rejectWithValue(error.response?.data?.message || 'Falha ao responder tweet');
+  }
+});
+
+export const editTweet = createAsyncThunk('feed/editTweet', async ({ id, content }: { id: string, content: string }, thunkAPI) => {
+  try {
+    return await tweetService.updateTweet(id, content);
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || 'Falha ao editar tweet');
   }
 });
 
@@ -81,9 +108,34 @@ export const feedSlice = createSlice({
       .addCase(createTweet.fulfilled, (state, action) => {
         state.tweets.unshift(action.payload);
       })
+      .addCase(editTweet.fulfilled, (state, action) => {
+        const index = state.tweets.findIndex(t => t.id === action.payload.id);
+        if (index !== -1) {
+          // Mantém as referências de autor e likes que podem não vir completas no PUT
+          state.tweets[index] = { ...state.tweets[index], ...action.payload };
+        }
+        
+        // Também tentar atualizar se for uma reply dentro de algum tweet
+        state.tweets.forEach(tweet => {
+          if (tweet.replies) {
+            const replyIndex = tweet.replies.findIndex(r => r.id === action.payload.id);
+            if (replyIndex !== -1) {
+              tweet.replies[replyIndex] = { ...tweet.replies[replyIndex], ...action.payload };
+            }
+          }
+        });
+      })
 
       .addCase(deleteTweet.fulfilled, (state, action) => {
+        // Remove da lista principal
         state.tweets = state.tweets.filter(t => t.id !== action.payload);
+        
+        // Remove das respostas de outros tweets
+        state.tweets.forEach(tweet => {
+          if (tweet.replies) {
+            tweet.replies = tweet.replies.filter(r => r.id !== action.payload);
+          }
+        });
       })
 
       .addCase(toggleLike.pending, (state, action) => {

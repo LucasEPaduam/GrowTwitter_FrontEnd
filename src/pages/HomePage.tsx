@@ -8,10 +8,13 @@ import { TweetCard } from '../components/TweetCard';
 export const HomePage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { tweets, loading } = useAppSelector((state) => state.feed);
+  const { user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    dispatch(fetchFeed());
-  }, [dispatch]);
+    if (user?.id) {
+      dispatch(fetchFeed(user.id));
+    }
+  }, [dispatch, user?.id]);
 
   return (
     <Box sx={{ pb: 10 }}>
