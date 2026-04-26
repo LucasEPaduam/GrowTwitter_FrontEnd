@@ -104,7 +104,7 @@ src/
 3. **Configurar Variáveis de Ambiente:**
    Crie um arquivo `.env` na raiz do projeto:
    ```bash
-   VITE_API_URL=URL_DA_API_GROWDEV
+   VITE_API_URL=https://growtwitter-api-dny6.onrender.com/
    ```
 
 4. **Rodar em Modo de Desenvolvimento:**
