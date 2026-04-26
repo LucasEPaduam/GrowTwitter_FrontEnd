@@ -27,7 +27,7 @@ Para atender às demandas do desafio proposto pela Growdev, foram implementados 
 - [x] **Gerenciamento de Estado Global**: Uso de Redux Toolkit para persistência e consistência de dados entre componentes complexos.
 - [x] **Integração com API Externa**: Persistência de dados real-time através de comunicação com backend dedicado.
 - [x] **Sistema de Autenticação**: Fluxo completo de Login e Cadastro com proteção de sessões via Token JWT.
-- [x] **Interações**: Criação e listagem de tweets, além de sistemas de Like e Follow.
+- [x] **Interações**: CRUD completo, criação e listagem de tweets, além de sistemas de Like e Follow.
 
 ---
 
