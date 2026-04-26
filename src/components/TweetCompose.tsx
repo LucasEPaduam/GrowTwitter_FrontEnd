@@ -26,7 +26,7 @@ export const TweetCompose: React.FC<TweetComposeProps> = ({ onSuccess, onTweetSu
       await dispatch(createTweet(content)).unwrap();
       setContent('');
 
-      dispatch(fetchFeed());
+      dispatch(fetchFeed(user?.id));
 
       if (user?.id && location.pathname.includes('/profile')) {
         dispatch(fetchProfileTweets(user.id));
