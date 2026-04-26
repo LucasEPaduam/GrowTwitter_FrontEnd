@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, TextField, InputAdornment, List, ListItem, Divider, IconButton, CircularProgress, Button, Avatar, ListItemAvatar } from '@mui/material';
-import { Search as SearchIcon, MoreHoriz as MoreHorizIcon } from '@mui/icons-material';
+import { Search as SearchIcon, MoreHoriz as MoreHorizIcon, RefreshOutlined as RefreshIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { userService } from '../services/userService';
@@ -16,24 +16,48 @@ const TRENDS = [
 export const ExplorePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { user: currentUser } = useAppSelector(state => state.auth);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
         const res = await userService.getAllUsers();
-        const filtered = res.filter(u => u.id !== currentUser?.id);
-        setSuggestions(filtered);
+        // Randomiza apenas uma vez na carga inicial para evitar reshuffle nos cliques
+        setAllUsers([...res].sort(() => 0.5 - Math.random()));
       } catch (e) {
         console.error("Erro ao carregar explorador:", e);
       } finally {
         setLoading(false);
       }
     };
-    if (currentUser) fetchAll();
-  }, [currentUser]);
+    if (currentUser?.id) fetchAll();
+  }, [currentUser?.id]);
+
+  const followingIds = new Set(currentUser?.following?.map((f: any) => f.followingId || f.id) || []);
+  const others = allUsers.filter(u => u.id !== currentUser?.id);
+  const groupA = others.filter(u => !followingIds.has(u.id));
+  const groupB = others.filter(u => followingIds.has(u.id));
+
+  let aCount = Math.min(groupA.length, 3);
+  let bCount = Math.min(groupB.length, 2);
+
+  if (aCount < 3) {
+    bCount = Math.min(groupB.length, 5 - aCount);
+  }
+  if (bCount < 2) {
+    aCount = Math.min(groupA.length, 5 - bCount);
+  }
+
+  const suggestions = [...groupA.slice(0, aCount), ...groupB.slice(0, bCount)];
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setAllUsers(prev => [...prev].sort(() => 0.5 - Math.random()));
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   const toggleFollow = async (targetUserId: string, currentlyFollowing: boolean) => {
     try {
@@ -74,13 +98,30 @@ export const ExplorePage: React.FC = () => {
         />
       </Box>
 
-      <Typography variant="h6" sx={{ fontWeight: 800, p: 2, pb: 1 }}>Quem seguir</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, pb: 1 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800 }}>Quem seguir</Typography>
+        <IconButton 
+          onClick={handleRefresh} 
+          size="small" 
+          sx={{
+            color: 'primary.main',
+            animation: isRefreshing ? 'spin 0.5s ease' : 'none',
+            '@keyframes spin': { '0%': { transform: 'rotate(0deg)' }, '100%': { transform: 'rotate(360deg)' } }
+          }}
+        >
+          <RefreshIcon />
+        </IconButton>
+      </Box>
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}><CircularProgress size={24} /></Box>
+      ) : suggestions.length === 0 ? (
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography color="text.secondary" sx={{ fontWeight: 600 }}>Você já segue todos os usuários disponíveis!</Typography>
+        </Box>
       ) : (
         <List disablePadding>
-          {suggestions.slice(0, 5).map((user) => {
+          {suggestions.map((user) => {
             const isFollowing = currentUser?.following?.some((f: any) => f.followingId === user.id || f.id === user.id) || false;
 
             return (
