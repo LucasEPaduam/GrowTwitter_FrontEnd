@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Box, Typography, Avatar, IconButton, Card, CardContent, CardActions, TextField, Button, CircularProgress } from '@mui/material';
-import { ChatBubbleOutlined as ChatBubbleOutlineIcon, FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon, DeleteOutlined as DeleteOutlineIcon } from '@mui/icons-material';
+import { Box, Typography, Avatar, IconButton, Card, CardContent, CardActions, TextField, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { ChatBubbleOutlined as ChatBubbleOutlineIcon, FavoriteBorder as FavoriteBorderIcon, Favorite as FavoriteIcon, DeleteOutlined as DeleteOutlineIcon, EditOutlined as EditOutlineIcon } from '@mui/icons-material';
 import type { Tweet } from '../types';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { toggleLike, deleteTweet, createReply, fetchFeed } from '../store/slices/feedSlice';
+import { toggleLike, deleteTweet, createReply, fetchFeed, editTweet } from '../store/slices/feedSlice';
 
 function formatTwitterDate(dateString: string): string {
   const now = Date.now();
@@ -37,10 +37,21 @@ export const TweetCard: React.FC<TweetCardProps> = ({ tweet, isReply = false, ro
   const [replyContent, setReplyContent] = useState('');
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
+  
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editContent, setEditContent] = useState(tweet.content);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+  
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const likes = Array.isArray(tweet.likes) ? tweet.likes : [];
   const isLikedByMe = user ? likes.some(like => String(like?.author?.id) === String(user.id) || like?.author?.id === 'mock') : false;
   const likesCount = likes.length;
+
+  const isMyTweet = user && (
+    String(user.id) === String(tweet.authorId) || 
+    String(user.id) === String(tweet.author?.id)
+  );
 
   const handleToggleLike = async () => {
     if (isLiking) return;
@@ -53,9 +64,28 @@ export const TweetCard: React.FC<TweetCardProps> = ({ tweet, isReply = false, ro
     }
   };
 
-  const handleDelete = () => {
-    if (window.confirm("Deseja realmente excluir este tweet?")) {
-      dispatch(deleteTweet(tweet.id));
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    dispatch(deleteTweet(tweet.id));
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editContent.trim() || editContent === tweet.content) {
+      setIsEditDialogOpen(false);
+      return;
+    }
+    setIsSubmittingEdit(true);
+    try {
+      await dispatch(editTweet({ id: tweet.id, content: editContent })).unwrap();
+      setIsEditDialogOpen(false);
+    } catch (err) {
+      console.error('Falha ao editar', err);
+    } finally {
+      setIsSubmittingEdit(false);
     }
   };
 
@@ -67,7 +97,7 @@ export const TweetCard: React.FC<TweetCardProps> = ({ tweet, isReply = false, ro
       await dispatch(createReply({ content: replyContent, replyTo: targetId })).unwrap();
       setReplyContent('');
       setIsReplying(false);
-      dispatch(fetchFeed());
+      dispatch(fetchFeed(user?.id));
     } catch (err) {
       console.error('Falha ao responder', err);
     } finally {
@@ -130,13 +160,20 @@ export const TweetCard: React.FC<TweetCardProps> = ({ tweet, isReply = false, ro
                 <IconButton size="small"><FavoriteBorderIcon fontSize="small" /></IconButton>
               </Box>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 40 }}>
-                {user?.id === tweet.authorId && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', '&:hover': { color: '#f4212e' } }} onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
-                    <IconButton size="small" color="inherit">
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 40, gap: 1 }}>
+                {isMyTweet && (
+                  <>
+                    <Box sx={{ display: 'flex', alignItems: 'center', '&:hover': { color: 'primary.main' } }} onClick={(e) => { e.stopPropagation(); setIsEditDialogOpen(true); setEditContent(tweet.content); }}>
+                      <IconButton size="small" color="inherit">
+                        <EditOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', '&:hover': { color: '#f4212e' } }} onClick={(e) => { e.stopPropagation(); handleDeleteClick(); }}>
+                      <IconButton size="small" color="inherit">
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </>
                 )}
               </Box>
             </CardActions>
@@ -172,6 +209,72 @@ export const TweetCard: React.FC<TweetCardProps> = ({ tweet, isReply = false, ro
           </Box>
         </CardContent>
       </Card>
+
+      <Dialog 
+        open={isEditDialogOpen} 
+        onClose={(e: any) => { e.stopPropagation(); setIsEditDialogOpen(false); }}
+        disableRestoreFocus
+        fullWidth
+        maxWidth="sm"
+        sx={{ '& .MuiDialog-paper': { bgcolor: 'background.default', borderRadius: 4, border: '1px solid', borderColor: 'divider' } }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>Editar Tweet</DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <TextField
+            autoFocus
+            multiline
+            minRows={3}
+            fullWidth
+            variant="outlined"
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            slotProps={{ htmlInput: { maxLength: 300 } }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Button onClick={(e) => { e.stopPropagation(); setIsEditDialogOpen(false); }} color="inherit" disabled={isSubmittingEdit} sx={{ textTransform: 'none', borderRadius: 9999 }}>
+            Cancelar
+          </Button>
+          <Button onClick={(e) => { e.stopPropagation(); handleEditSubmit(); }} variant="contained" disabled={!editContent.trim() || isSubmittingEdit || editContent === tweet.content} sx={{ textTransform: 'none', borderRadius: 9999 }}>
+            {isSubmittingEdit ? <CircularProgress size={20} color="inherit" /> : 'Salvar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={isDeleteDialogOpen}
+        onClose={(e: any) => { e.stopPropagation(); setIsDeleteDialogOpen(false); }}
+        disableRestoreFocus
+        fullWidth
+        maxWidth="xs"
+        sx={{ '& .MuiDialog-paper': { bgcolor: 'background.default', borderRadius: 4, border: '1px solid', borderColor: 'divider' } }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Excluir tweet?</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary">
+            Essa ação não pode ser desfeita e o tweet será removido do seu perfil e da linha do tempo de outras pessoas.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button 
+            onClick={(e) => { e.stopPropagation(); setIsDeleteDialogOpen(false); }} 
+            color="inherit" 
+            sx={{ textTransform: 'none', borderRadius: 9999, fontWeight: 700 }}
+          >
+            Cancelar
+          </Button>
+          <Button 
+            onClick={(e) => { e.stopPropagation(); confirmDelete(); }} 
+            color="error" 
+            variant="contained" 
+            sx={{ textTransform: 'none', borderRadius: 9999, fontWeight: 700 }}
+          >
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {tweet.replies && tweet.replies.length > 0 && (
         <Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
